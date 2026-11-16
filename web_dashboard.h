@@ -233,11 +233,11 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
     <div class="card card-bpm">
       <div class="card-header">
         <span class="card-label">Heart Rate</span>
-        <span class="card-icon bpm-pulse">❤️</span>
+        <span class="card-icon" id="bpm-icon">❤️</span>
       </div>
       <div class="card-value"><span id="val-bpm">--</span><span class="card-unit">BPM</span></div>
       <div class="card-subtext">
-        <span>Y1708 Inner Ankle</span>
+        <span id="val-contact-status">No Skin Contact</span>
         <span id="val-raw-ppg">ADC: --</span>
       </div>
     </div>
@@ -396,7 +396,23 @@ const char DASHBOARD_HTML[] PROGMEM = R"rawliteral(
       const data = await res.json();
 
       // Update UI elements
-      document.getElementById('val-bpm').innerText = data.bpm > 0 ? data.bpm : '--';
+      const bpmVal = data.bpm;
+      const bpmElem = document.getElementById('val-bpm');
+      const bpmIcon = document.getElementById('bpm-icon');
+      const contactStatus = document.getElementById('val-contact-status');
+
+      if (bpmVal > 0) {
+        bpmElem.innerText = bpmVal;
+        bpmIcon.classList.add('bpm-pulse');
+        contactStatus.innerText = 'Skin Contact Active';
+        contactStatus.style.color = '#34d399';
+      } else {
+        bpmElem.innerText = '--';
+        bpmIcon.classList.remove('bpm-pulse');
+        contactStatus.innerText = 'No Skin Contact';
+        contactStatus.style.color = '#94a3b8';
+      }
+
       document.getElementById('val-raw-ppg').innerText = 'ADC: ' + data.raw_ppg;
       document.getElementById('val-steps').innerText = data.steps.toLocaleString();
       document.getElementById('val-cadence').innerText = Math.round(data.cadence);

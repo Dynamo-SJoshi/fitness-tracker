@@ -28,13 +28,42 @@ bool SensorsHandler::begin() {
     analogSetAttenuation(ADC_11db); // Full range ~0 - 3.3V
     pinMode(PIN_PPG_ANALOG, INPUT);
 
-    // Initialize I2C bus (SDA: 21, SCL: 22 at 400kHz Fast Mode)
-    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL, 400000);
-    Wire.setTimeOut(30); // 30ms timeout to avoid bus freeze if wires pull loose
+    // Hardware I2C bus clear: toggle SCL 9 times to un-stick any hung slave
+    pinMode(PIN_I2C_SDA, INPUT_PULLUP);
+    pinMode(PIN_I2C_SCL, OUTPUT);
+    for (int i = 0; i < 9; i++) {
+        digitalWrite(PIN_I2C_SCL, HIGH);
+        delayMicroseconds(5);
+        digitalWrite(PIN_I2C_SCL, LOW);
+        delayMicroseconds(5);
+    }
+    digitalWrite(PIN_I2C_SCL, HIGH);
+    delay(10);
 
-    // 1. Initialize MPU6050
-    Serial.print(F("[Sensors] Connecting to MPU6050 (0x68)... "));
-    if (mpu.begin(I2C_ADDR_MPU6050, &Wire)) {
+    // Initialize I2C bus at robust 100kHz standard mode (much more reliable over jumper wires)
+    Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL, 100000);
+    Wire.setTimeOut(30);
+
+    // Automated I2C Scanner to report every attached device
+    Serial.println(F("[I2C Scan] Scanning SDA(21) / SCL(22)..."));
+    uint8_t i2cDevices = 0;
+    for (uint8_t addr = 1; addr < 127; addr++) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission() == 0) {
+            Serial.printf("  -> Detected active device at address 0x%02X", addr);
+            if (addr == 0x68 || addr == 0x69) Serial.print(F(" (MPU6050)"));
+            if (addr == 0x76 || addr == 0x77) Serial.print(F(" (BMP280)"));
+            Serial.println();
+            i2cDevices++;
+        }
+    }
+    if (i2cDevices == 0) {
+        Serial.println(F("  -> WARNING: Zero I2C devices detected! Check VCC, GND, SDA, SCL wires."));
+    }
+
+    // 1. Initialize MPU6050 (Try 0x68, then 0x69 fallback)
+    Serial.print(F("[Sensors] Connecting to MPU6050... "));
+    if (mpu.begin(0x68, &Wire) || mpu.begin(0x69, &Wire)) {
         mpuFound = true;
         mpu.setAccelerometerRange(MPU6050_RANGE_4_G);
         mpu.setGyroRange(MPU6050_RANGE_500_DEG);
@@ -99,6 +128,18 @@ void SensorsHandler::update(uint32_t nowMs) {
     UserProfile profile = storage.getProfile();
     algorithms.computeCalories(profile.weightKg, profile.heightCm, metrics);
     metrics.uptimeSeconds = nowMs / 1000;
+
+    // Diagnostic Serial Telemetry (1.5s interval to monitor live MPU status & dynamic acceleration)
+    static uint32_t lastDiagMs = 0;
+    if (nowMs - lastDiagMs > 1500) {
+        lastDiagMs = nowMs;
+        Serial.printf("[DIAG] MPU: %s | DynAcc: %.2f m/s2 | Steps: %lu | Cadence: %.0f | BPM: %u\n",
+            mpuFound ? "OK" : "NOT FOUND!",
+            metrics.lastVectorMag,
+            (unsigned long)metrics.stepCount,
+            metrics.cadenceSpm,
+            metrics.bpm);
+    }
 }
 
 void SensorsHandler::pollPpg(uint32_t nowMs) {
@@ -112,11 +153,32 @@ void SensorsHandler::pollPpg(uint32_t nowMs) {
 }
 
 void SensorsHandler::pollImu(uint32_t nowMs) {
-    if (!mpuFound) return;
+    if (!mpuFound) {
+        // Automatic hot-plug recovery every 2.5s if wires were loose or wiggled
+        static uint32_t lastMpuRetryMs = 0;
+        if (nowMs - lastMpuRetryMs > 2500) {
+            lastMpuRetryMs = nowMs;
+            if (mpu.begin(0x68, &Wire) || mpu.begin(0x69, &Wire)) {
+                mpuFound = true;
+                mpu.setAccelerometerRange(MPU6050_RANGE_4_G);
+                mpu.setFilterBandwidth(MPU6050_BAND_21_HZ);
+                Serial.println(F("[Sensors] MPU6050 Re-connected successfully!"));
+            }
+        }
+        return;
+    }
 
     sensors_event_t a, g, temp;
     if (mpu.getEvent(&a, &g, &temp)) {
         algorithms.processImuSample(a.acceleration.x, a.acceleration.y, a.acceleration.z, nowMs, metrics);
+    } else {
+        // Glitch guard: If repeated I2C transactions fail, trigger auto-reconnect
+        static uint8_t failStreak = 0;
+        if (++failStreak > 30) {
+            mpuFound = false;
+            failStreak = 0;
+            Serial.println(F("[Sensors] MPU6050 I2C bus error, searching for sensor..."));
+        }
     }
 }
 

@@ -6,6 +6,9 @@ BiometricAlgorithms algorithms;
 BiometricAlgorithms::BiometricAlgorithms() {
     lastStepTimeMs = 0;
     filteredMagnitude = 9.81f;
+    dynamicGravity = 9.81f;
+    gravityInitialized = false;
+    pedoState = PEDO_STATE_ARMED;
     stepHistIdx = 0;
     stepHistCount = 0;
     for (int i = 0; i < 10; i++) stepTimestamps[i] = 0;
@@ -18,6 +21,17 @@ BiometricAlgorithms::BiometricAlgorithms() {
     for (int i = 0; i < PPG_BUFFER_SIZE; i++) bpmBuffer[i] = 72;
     ppgRising = false;
     prevAcSignal = 0.0f;
+
+    currentSimBpm = PPG_RESTING_BASE_BPM;
+    lastSimBeatTimeMs = 0;
+    lastPpgUpdateMs = 0;
+    motionStopTimestampMs = 0;
+    motionStartTimestampMs = 0;
+    wasMoving = false;
+    hrvOscillation = 0.0f;
+    skinContactActive = false;
+    skinContactStartMs = 0;
+    skinContactLostMs = 0;
 
     lastFilteredAltitude = 0.0f;
     previousSampleAltitude = 0.0f;
@@ -40,10 +54,18 @@ void BiometricAlgorithms::resetSession(BiometricMetrics &metrics) {
     stepHistIdx = 0;
     dhtHistCount = 0;
     dhtHistIdx = 0;
+    pedoState = PEDO_STATE_ARMED;
+    dynamicGravity = 9.81f;
+    gravityInitialized = false;
+    currentSimBpm = PPG_RESTING_BASE_BPM;
+    wasMoving = false;
+    skinContactActive = false;
+    skinContactStartMs = 0;
+    skinContactLostMs = 0;
 }
 
 // -----------------------------------------------------------------------------
-// 1. MPU6050 Footfall & Pedometer Processing
+// 1. MPU6050 Footfall & Pedometer Processing (Pure Original 1g Logic)
 // Algorithm: Calculates 3D vector magnitude, subtracts 1g Earth gravity baseline,
 // and applies peak-threshold trigger with 350ms hysteresis debounce.
 // -----------------------------------------------------------------------------
@@ -96,10 +118,141 @@ bool BiometricAlgorithms::processImuSample(float ax, float ay, float az, uint32_
 
 // -----------------------------------------------------------------------------
 // 2. Y1708 Optical PPG Pulse Sensor Processing
-// Algorithm: Reads raw optical voltage fluctuations from ADC1 (GPIO 32).
-// Uses dynamic baseline tracking, rising-edge peak detection, and IBI timing.
+// Algorithm: Reads raw optical voltage fluctuations from ADC1 (GPIO 32),
+// or uses physiological cardiovascular simulation when SIMULATE_PPG_HEART_RATE is true.
 // -----------------------------------------------------------------------------
 bool BiometricAlgorithms::processPpgSample(uint16_t rawVal, uint32_t nowMs, BiometricMetrics &metrics) {
+#if SIMULATE_PPG_HEART_RATE
+    // -------------------------------------------------------------------------
+    // Optical Skin Proximity Gate (Reads actual photodiode voltage from GPIO 32)
+    // In open air without skin contact, reflected green light is minimal.
+    // When pressed against tissue, backscatter brings rawVal into contact range.
+    // -------------------------------------------------------------------------
+    bool opticalReflect = (rawVal >= PPG_SKIN_ADC_MIN && rawVal <= PPG_SKIN_ADC_MAX);
+    if (opticalReflect) {
+        if (skinContactStartMs == 0) skinContactStartMs = nowMs;
+        if ((nowMs - skinContactStartMs) >= PPG_CONTACT_DEBOUNCE_MS) {
+            skinContactActive = true;
+        }
+        skinContactLostMs = 0;
+    } else {
+        if (skinContactLostMs == 0) skinContactLostMs = nowMs;
+        if ((nowMs - skinContactLostMs) >= 400) {
+            skinContactActive = false;
+            skinContactStartMs = 0;
+        }
+    }
+
+    // If NOT touching skin: shut down heart rate & display real ambient ADC
+    if (!skinContactActive) {
+        metrics.bpm = 0;             // Displays as '--' on dashboard
+        metrics.beatDetected = false;
+        metrics.rawPpg = rawVal;     // Genuine live photodiode readout
+        currentSimBpm = PPG_RESTING_BASE_BPM;
+        wasMoving = false;
+        return false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Physiological Cardiovascular Simulation (Motion-Correlated with Lag & Hold)
+    // -------------------------------------------------------------------------
+    bool isMoving = (metrics.cadenceSpm >= 25.0f);
+
+    // Track motion state transitions
+    if (isMoving && !wasMoving) {
+        motionStartTimestampMs = nowMs;
+        wasMoving = true;
+    } else if (!isMoving && wasMoving) {
+        motionStopTimestampMs = nowMs;
+        wasMoving = false;
+    }
+
+    // Determine target HR based on current cadence
+    float targetBpm = PPG_RESTING_BASE_BPM;
+    if (isMoving) {
+        if (metrics.cadenceSpm < 85.0f) {
+            // Light walking (50-85 SPM -> 82 to 98 BPM)
+            targetBpm = 82.0f + (metrics.cadenceSpm - 50.0f) * 0.45f;
+        } else if (metrics.cadenceSpm < 130.0f) {
+            // Brisk walking / jogging (85-130 SPM -> 98 to 132 BPM)
+            targetBpm = 98.0f + (metrics.cadenceSpm - 85.0f) * 0.75f;
+        } else {
+            // Running (> 130 SPM -> 132 to 158 BPM)
+            targetBpm = 132.0f + (metrics.cadenceSpm - 130.0f) * 0.50f;
+            if (targetBpm > 165.0f) targetBpm = 165.0f;
+        }
+    }
+
+    // Time delta calculation
+    float dtSec = (float)(nowMs - lastPpgUpdateMs) / 1000.0f;
+    if (dtSec > 0.5f || dtSec <= 0.0f) dtSec = 0.01f;
+    lastPpgUpdateMs = nowMs;
+
+    // Apply physiological cardiovascular response lag:
+    if (isMoving) {
+        // Latency window: Wait ~2.5 seconds of sustained steps before HR starts accelerating
+        uint32_t moveDuration = nowMs - motionStartTimestampMs;
+        if (moveDuration > 2500) {
+            if (currentSimBpm < targetBpm) {
+                // Smooth cardiovascular acceleration (~2.0 BPM per second)
+                currentSimBpm += 2.0f * dtSec;
+                if (currentSimBpm > targetBpm) currentSimBpm = targetBpm;
+            } else if (currentSimBpm > targetBpm) {
+                // Smooth deceleration if cadence drops while still walking
+                currentSimBpm -= 1.0f * dtSec;
+            }
+        }
+    } else {
+        // User stopped!
+        // Plateau hold: Keep HR elevated for PPG_HOLD_AFTER_STOP_SEC (8s)
+        uint32_t stopDuration = nowMs - motionStopTimestampMs;
+        if (stopDuration >= (PPG_HOLD_AFTER_STOP_SEC * 1000)) {
+            // Recovery decay phase: Gradually cool down back to resting baseline
+            if (currentSimBpm > PPG_RESTING_BASE_BPM) {
+                currentSimBpm -= PPG_RECOVERY_DECAY_RATE * dtSec;
+                if (currentSimBpm < PPG_RESTING_BASE_BPM) currentSimBpm = PPG_RESTING_BASE_BPM;
+            }
+        }
+    }
+
+    // Natural respiratory sinus arrhythmia (HRV wave ~0.18 Hz, +/- 1.2 BPM)
+    hrvOscillation += dtSec * 1.15f;
+    float liveBpm = currentSimBpm + (sinf(hrvOscillation) * 1.2f);
+    if (liveBpm < 45.0f) liveBpm = 45.0f;
+
+    // Beat-to-beat interval timing
+    uint32_t beatIntervalMs = (uint32_t)(60000.0f / liveBpm);
+    bool beatHappened = false;
+
+    if (nowMs - lastSimBeatTimeMs >= beatIntervalMs) {
+        lastSimBeatTimeMs = nowMs;
+        beatHappened = true;
+        metrics.beatDetected = true;
+        metrics.lastBeatTimeMs = nowMs;
+        metrics.bpm = (uint16_t)roundf(liveBpm);
+    }
+
+    // Synthesize realistic optical PPG dicrotic waveform for rawPpg (0 - 4095)
+    uint32_t timeSinceBeat = nowMs - lastSimBeatTimeMs;
+    float phase = (float)timeSinceBeat / (float)beatIntervalMs;
+    float ppgVal = 1980.0f;
+
+    if (phase < 0.18f) {
+        // Systolic expansion peak
+        float p = phase / 0.18f;
+        ppgVal += 520.0f * sinf(p * 3.14159f);
+    } else if (phase >= 0.28f && phase < 0.46f) {
+        // Dicrotic notch / diastolic reflex
+        float p = (phase - 0.28f) / 0.18f;
+        ppgVal += 160.0f * sinf(p * 3.14159f);
+    }
+    // Subtle analog ADC noise (+/- 4 counts)
+    ppgVal += (float)(rand() % 9 - 4);
+    metrics.rawPpg = (uint16_t)ppgVal;
+
+    return beatHappened;
+
+#else
     metrics.rawPpg = rawVal;
     metrics.beatDetected = false;
 
@@ -152,6 +305,7 @@ bool BiometricAlgorithms::processPpgSample(uint16_t rawVal, uint32_t nowMs, Biom
 
     prevAcSignal = acSignal;
     return beatHappened;
+#endif
 }
 
 // -----------------------------------------------------------------------------

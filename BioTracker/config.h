@@ -34,12 +34,22 @@
 
 // --- Pedometer Algorithm Parameters (MPU6050) ---
 // Human gait frequency is predominantly < 5 Hz (cadence ~ 1.5 - 2.5 steps/sec)
-#define PEDO_SAMPLE_RATE_HZ     50                  // 50 Hz IMU polling (20ms interval)
-#define PEDO_GRAVITY_EARTH      9.80665f            // 1g baseline in m/s^2
-#define PEDO_PEAK_THRESHOLD     2.20f               // Net acceleration threshold (m/s^2) above 1g baseline
-#define PEDO_HYSTERESIS_DEBOUNCE_MS 350             // Strict 350ms lockout window to prevent false double-counts
+#define PEDO_SAMPLE_RATE_HZ         50                  // 50 Hz IMU polling (20ms interval)
+#define PEDO_GRAVITY_EARTH          9.80665f            // 1g baseline in m/s^2
+#define PEDO_PEAK_THRESHOLD         2.50f               // Net acceleration threshold (m/s^2) above 1g baseline
+#define PEDO_HYSTERESIS_DEBOUNCE_MS 350                 // Strict 350ms lockout window to prevent false double-counts
 
 // --- PPG / Heart Rate Parameters (Y1708) ---
+#define SIMULATE_PPG_HEART_RATE     true                // Set true for physiological ankle demo simulation
+#define PPG_RESTING_BASE_BPM        74.0f               // Baseline resting heart rate (BPM)
+#define PPG_HOLD_AFTER_STOP_SEC     8                   // Plateau hold time after stopping (seconds)
+#define PPG_RECOVERY_DECAY_RATE     0.85f               // Cardiovascular recovery rate back to baseline (BPM/sec)
+
+// Optical Skin Proximity (Plan A Contact Gate)
+#define PPG_SKIN_ADC_MIN            500                 // Min reflected ADC voltage to confirm tissue contact
+#define PPG_SKIN_ADC_MAX            3800                // Max direct ambient saturation ceiling
+#define PPG_CONTACT_DEBOUNCE_MS     500                 // Sustained skin contact required to engage (ms)
+
 #define PPG_SAMPLE_RATE_HZ      100                 // 100 Hz PPG ADC sampling (10ms interval)
 #define PPG_BUFFER_SIZE         10
 #define PPG_MIN_BPM             45                  // Physiological human limits

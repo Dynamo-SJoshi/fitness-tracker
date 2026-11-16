@@ -39,6 +39,11 @@ struct BiometricMetrics {
     float batteryVoltageEstimate;
 };
 
+enum PedometerState {
+    PEDO_STATE_ARMED,        // Ready to detect rising footfall impact peak
+    PEDO_STATE_WAIT_VALLEY   // Peak detected; waiting for valley drop & debounce window
+};
+
 class BiometricAlgorithms {
 public:
     BiometricAlgorithms();
@@ -65,6 +70,9 @@ private:
     // Pedometer states
     uint32_t lastStepTimeMs;
     float filteredMagnitude;
+    float dynamicGravity;
+    PedometerState pedoState;
+    bool gravityInitialized;
     uint32_t stepTimestamps[10];
     uint8_t stepHistIdx;
     uint8_t stepHistCount;
@@ -78,6 +86,18 @@ private:
     uint8_t bpmBufCount;
     bool ppgRising;
     float prevAcSignal;
+
+    // Simulated Cardiovascular Engine states
+    float currentSimBpm;
+    uint32_t lastSimBeatTimeMs;
+    uint32_t lastPpgUpdateMs;
+    uint32_t motionStopTimestampMs;
+    uint32_t motionStartTimestampMs;
+    bool wasMoving;
+    float hrvOscillation;
+    bool skinContactActive;
+    uint32_t skinContactStartMs;
+    uint32_t skinContactLostMs;
 
     // Altimeter states
     float lastFilteredAltitude;
