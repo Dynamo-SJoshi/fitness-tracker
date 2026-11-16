@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Project Report: Off-Grid Biometric Ankle Tracker (BioTracker)</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 18mm 18mm 18mm 18mm;
+  }
+  @media print {
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    .page-break {
+      page-break-after: always;
+      break-after: page;
+    }
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #2c3e50;
+    line-height: 1.55;
+    margin: 0;
+    padding: 0;
+    font-size: 10.5pt;
+    background-color: #ffffff;
+  }
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 18mm 20mm 18mm 20mm;
+    margin: 0 auto;
+    position: relative;
+    background: #ffffff;
+    box-sizing: border-box;
+  }
+  @media screen {
+    body {
+      background: #f0f2f5;
+      padding: 20px 0;
+    }
+    .page {
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      margin-bottom: 25px;
+    }
+  }
+
+  /* Cover Page Styling */
+  .cover-page {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 260mm;
+    padding: 5mm 5mm;
+  }
+  .cover-title-1 {
+    font-size: 21pt;
+    font-weight: 500;
+    color: #111;
+    margin-bottom: 6px;
+  }
+  .cover-title-on {
+    font-size: 14pt;
+    color: #111;
+    margin-bottom: 10px;
+  }
+  .cover-subject {
+    font-size: 22pt;
+    font-weight: 700;
+    color: #e53935;
+    margin-bottom: 26px;
+  }
+  .cover-subtext {
+    font-size: 11pt;
+    color: #6a1b9a;
+    line-height: 1.6;
+    margin-bottom: 22px;
+  }
+  .cover-degree {
+    font-size: 13.5pt;
+    font-weight: 600;
+    color: #6a1b9a;
+  }
+  .cover-dept {
+    font-size: 14pt;
+    font-weight: 600;
+    color: #6a1b9a;
+  }
+  .cover-by {
+    font-size: 11.5pt;
+    font-style: italic;
+    color: #333;
+    margin-bottom: 12px;
+  }
+  .cover-students {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #00897b;
+    line-height: 2.1;
+    margin-bottom: 24px;
+  }
+  .cover-guidance {
+    font-size: 13.5pt;
+    font-weight: 600;
+    color: #6a1b9a;
+    margin-bottom: 8px;
+  }
+  .cover-guides {
+    font-size: 13pt;
+    font-weight: 600;
+    color: #00897b;
+    margin-bottom: 18px;
+  }
+  .logo-container {
+    margin: 10px auto;
+  }
+  .logo-container img {
+    width: 140px;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+  }
+  .cover-bottom-dept {
+    font-size: 11pt;
+    font-weight: 600;
+    color: #0288d1;
+    letter-spacing: 0.5px;
+    margin-top: 14px;
+    margin-bottom: 6px;
+  }
+  .cover-date {
+    font-size: 11pt;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  .cover-institute {
+    font-size: 10.5pt;
+    font-weight: 600;
+    color: #e53935;
+    letter-spacing: 0.3px;
+  }
+
+  /* Content Pages Styling */
+  .doc-title {
+    font-size: 20pt;
+    font-weight: 700;
+    color: #1a252f;
+    margin: 0 0 6px 0;
+    line-height: 1.25;
+  }
+  .doc-subtitle {
+    font-size: 11.5pt;
+    font-style: italic;
+    color: #546e7a;
+    margin-bottom: 14px;
+  }
+  .title-divider {
+    border: none;
+    border-top: 2px solid #0288d1;
+    margin-bottom: 20px;
+  }
+
+  h2.sec-heading {
+    font-size: 13pt;
+    font-weight: 700;
+    color: #0288d1;
+    margin: 22px 0 10px 0;
+    border-bottom: 1px solid #e1f5fe;
+    padding-bottom: 4px;
+  }
+  h3.subsec-heading {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 14px 0 6px 0;
+  }
+  p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+  }
+  ul {
+    margin: 4px 0 12px 18px;
+    padding: 0;
+  }
+  li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+  }
+  li strong {
+    color: #1a252f;
+  }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 18px 0;
+    font-size: 9.8pt;
+  }
+  table, th, td {
+    border: 1px solid #cfd8dc;
+  }
+  th {
+    background-color: #eceff1;
+    color: #263238;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 10px;
+  }
+  td {
+    padding: 7px 10px;
+    vertical-align: top;
+  }
+
+  /* Math formulas block */
+  .formula-block {
+    text-align: center;
+    font-family: "Cambria Math", "Times New Roman", serif;
+    font-size: 11.5pt;
+    margin: 12px 0;
+    color: #1a252f;
+    line-height: 1.8;
+  }
+
+  /* Flowchart Styling (matching PDF page 5) */
+  .flowchart {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 18px 0;
+  }
+  .flow-start {
+    background-color: #0d1b2a;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 9.5pt;
+    padding: 8px 36px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  }
+  .flow-box {
+    background: #ffffff;
+    border: 1.5px solid #263238;
+    color: #263238;
+    font-size: 9.5pt;
+    font-weight: 500;
+    padding: 9px 24px;
+    border-radius: 4px;
+    min-width: 250px;
+    text-align: center;
+  }
+  .flow-box-highlight {
+    background: #e1f5fe;
+    border: 1.5px solid #0288d1;
+    color: #01579b;
+    font-weight: 600;
+  }
+  .flow-arrow {
+    font-size: 14pt;
+    color: #37474f;
+    margin: 3px 0;
+  }
+  .flow-repeat {
+    font-size: 9.5pt;
+    font-style: italic;
+    color: #546e7a;
+    margin-top: 6px;
+  }
+
+  /* References */
+  .references ol {
+    margin: 8px 0 0 20px;
+    padding: 0;
+    font-size: 9.2pt;
+    line-height: 1.5;
+  }
+  .references li {
+    margin-bottom: 7px;
+    text-align: justify;
+  }
+
+  /* Page Footer */
+  .page-footer {
+    position: absolute;
+    bottom: 12mm;
+    left: 20mm;
+    right: 20mm;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8.5pt;
+    color: #78909c;
+    border-top: 1px solid #cfd8dc;
+    padding-top: 5px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= PAGE 1: TITLE / COVER PAGE ================= -->
+<div class="page cover-page page-break">
+  <div>
+    <div class="cover-title-1">A Project Report</div>
+    <div class="cover-title-on">on</div>
+    <div class="cover-subject">Sensors And Intrumentation lab</div>
+    
+    <div class="cover-subtext">
+      Submitted for the Partial Fulfillment of the Requirements for the degree of<br>
+      <span class="cover-degree">Bachelor of Technology</span><br>
+      <i>in</i><br>
+      <span class="cover-dept">Electronics and Communication Engineering</span>
+    </div>
+
+    <div class="cover-by">by</div>
+    <div class="cover-students">
+      UG25ECE068 – Shreedhar Joshi<br>
+      UG25ECE079 – Veer Chavda
+    </div>
+
+    <div class="cover-guidance">Under the guidance of</div>
+    <div class="cover-guides">Dr. Venkata A. P. Chavali, Dr. Sudeep Sharma</div>
+  </div>
+
+  <div>
+    <div class="logo-container">
+      <img src="iiit_surat_logo.png" alt="Indian Institute of Information Technology Surat Logo">
+    </div>
+    <div class="cover-bottom-dept">ELECTRONICS AND COMMUNICATION ENGINEERING</div>
+    <div class="cover-date">November, 2026</div>
+    <div class="cover-institute">INDIAN INSTITUTE OF INFORMATION TECHNOLOGY SURAT-394190</div>
+  </div>
+</div>
+
+<!-- ================= PAGE 2 ================= -->
+<div class="page page-break">
+  <div class="doc-title">Project Report: Off-Grid Biometric Ankle Tracker (BioTracker)</div>
+  <div class="doc-subtitle">An IoT-Based Real-Time Kinematic, Biometric, and Microclimate Wearable System</div>
+  <hr class="title-divider">
+
+  <h2 class="sec-heading">1. Executive Summary & Objectives</h2>
+  <p>
+    The Off-Grid Biometric Ankle Tracker (BioTracker) is an academic-grade Internet of Things (IoT) wearable instrumentation system engineered to eliminate the fundamental inaccuracy and momentum artifacts ("floppy effect") inherent in commercial wrist-based fitness trackers. Utilizing an ESP32 microcontroller paired with an inertial measurement unit (IMU), optical photoplethysmography (PPG), barometric altimetry, and localized skin microclimate sensing powered portably by a 5V USB power bank, the device accurately tracks footfall kinematics, cardiovascular pulse, vertical work against gravity, and perspiration dynamics in real-time [1].
+  </p>
+  <p>The primary objectives of this project are:</p>
+  <ul>
+    <li><strong>Lower-Limb Kinematic Pedometer & Cadence:</strong> Direct measurement of tibial ground-impact deceleration vectors to eliminate false positives caused by arm gestures [2].</li>
+    <li><strong>Cardiovascular Pulse Extraction:</strong> Non-invasive optical PPG sensing over the posterior tibial capillary bed, filtered via dynamic baseline tracking.</li>
+    <li><strong>Vertical Work & Incline Caloric Calculation:</strong> Atmospheric pressure compensation using a deadband filter to accurately calculate mechanical work performed during climbing.</li>
+    <li><strong>Footwear Microclimate Hydration Monitoring:</strong> Measurement of enclosed skin relative humidity to compute real-time sweat rates and hydration status tiers [3].</li>
+    <li><strong>Autonomous Off-Grid Dashboard:</strong> A self-contained, zero-dependency local Wi-Fi SoftAP server hosting a real-time AJAX analytics dashboard without cloud or internet reliance.</li>
+  </ul>
+
+  <h2 class="sec-heading">2. System Architecture</h2>
+  <p>
+    The system architecture integrates physical wearable hardware sensors with an embedded real-time web server to deliver autonomous, off-grid telemetry.
+  </p>
+
+  <h3 class="subsec-heading">2.1 Hardware Components</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 32%;">Component</th>
+        <th>Description and Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>ESP32 DevKit V1</strong></td>
+        <td>The main processing unit executing digital signal conditioning, algorithmic filtering, NVS flash profile management, and serving the local Wi-Fi SoftAP web server [4].</td>
+      </tr>
+      <tr>
+        <td><strong>MPU6050 6-Axis IMU</strong></td>
+        <td>Captures 3D linear acceleration and angular velocity vectors at 50 Hz on the lateral malleolus to detect locomotive ground-impact shockwaves.</td>
+      </tr>
+      <tr>
+        <td><strong>Y1708 Optical PPG Sensor</strong></td>
+        <td>Measures arterial blood volume pulse waveforms using green optical reflection (570 nm) placed over the posterior tibial artery on the medial malleolus.</td>
+      </tr>
+      <tr>
+        <td><strong>BMP280 Barometric Altimeter</strong></td>
+        <td>Piezoresistive pressure sensor delivering high-precision altitude and vertical ascent data to compute thermodynamic climb energy.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>Off-Grid Biometric Ankle Tracker (BioTracker)</span>
+    <span>Page 1 of 6</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 3 ================= -->
+<div class="page page-break">
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 32%;">Component</th>
+        <th>Description and Purpose</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>DHT22 / DHT11 Sensor</strong></td>
+        <td>Monitors trapped skin microclimate relative humidity (RH) and ambient temperature to quantify localized perspiration rates and hydration tiers.</td>
+      </tr>
+      <tr>
+        <td><strong>Portable 5V USB Power Bank</strong></td>
+        <td>Supplies regulated 5V DC power directly via the ESP32 Micro-USB port, delivering stable, continuous operation during locomotion without tethering to AC mains.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="subsec-heading">2.2 Software and Firmware Technologies</h3>
+  <ul>
+    <li><strong>PlatformIO & Arduino C/C++:</strong> Used for programming bare-metal ESP32 firmware, hardware interrupts, and real-time sensor polling loops [5].</li>
+    <li><strong>Web Technologies (HTML5, CSS3, JavaScript):</strong> Forms the zero-dependency, responsive dark-mode mobile dashboard UI served directly from ESP32 flash.</li>
+    <li><strong>Asynchronous Web Server (ESPAsyncWebServer):</strong> Handles RESTful API data serialization (`/api/data`), parameter updates (`/api/profile`), and session resets.</li>
+    <li><strong>HTML5 Canvas Graphics:</strong> Utilized for real-time visualization of dynamic acceleration magnitudes and perspiration trendlines without external libraries.</li>
+    <li><strong>Non-Volatile Storage (Preferences.h):</strong> Retains user biometric profiles (body mass, height) across power resets for customized calorie calculations.</li>
+  </ul>
+
+  <h2 class="sec-heading">3. Circuit Design and Electrical Integration</h2>
+  <p>
+    Proper electrical integration is critical to protect sensitive mixed-signal sensors, minimize noise coupling on analog channels, and prevent I2C bus lockups [6].
+  </p>
+
+  <h3 class="subsec-heading">3.1 MPU6050 & BMP280 Sensor Connections (Shared I2C Bus)</h3>
+  <p>
+    The MPU6050 IMU and BMP280 altimeter communicate over a shared 3.3V high-speed I2C bus operating at 400 kHz.
+  </p>
+  <ul>
+    <li><strong>VCC:</strong> Connected to ESP32 3.3V power rail with local decoupling capacitors (100 nF ceramic).</li>
+    <li><strong>GND:</strong> Connected to common star ground (GND).</li>
+    <li><strong>SDA:</strong> Connected to ESP32 GPIO 21 with a 4.7 kΩ pull-up resistor to 3.3V.</li>
+    <li><strong>SCL:</strong> Connected to ESP32 GPIO 22 with a 4.7 kΩ pull-up resistor to 3.3V.</li>
+  </ul>
+
+  <h3 class="subsec-heading">3.2 Y1708 Optical PPG Sensor Connections</h3>
+  <p>
+    To eliminate radio-frequency (RF) cross-talk caused by the ESP32 Wi-Fi module, the analog PPG signal is dedicated to ADC1 (which remains completely uncoupled from Wi-Fi hardware locks).
+  </p>
+  <ul>
+    <li><strong>VCC:</strong> Connected to ESP32 3.3V pin.</li>
+    <li><strong>GND:</strong> Connected to common ground.</li>
+    <li><strong>SIGNAL:</strong> Connected to ESP32 GPIO 32 (ADC1 Channel 4).</li>
+  </ul>
+
+  <h3 class="subsec-heading">3.3 DHT22 Sensor Connections</h3>
+  <ul>
+    <li><strong>VCC:</strong> Connected to ESP32 3.3V pin.</li>
+    <li><strong>GND:</strong> Connected to common ground.</li>
+    <li><strong>DATA:</strong> Connected to ESP32 GPIO 4 with a 10 kΩ pull-up resistor.</li>
+  </ul>
+
+  <div class="page-footer">
+    <span>Off-Grid Biometric Ankle Tracker (BioTracker)</span>
+    <span>Page 2 of 6</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 4 ================= -->
+<div class="page page-break">
+  <h2 class="sec-heading">4. Mathematical Modeling and Kinematic Calculations</h2>
+  <p>
+    The ESP32 processes raw sensor timings and ADC signals into actionable metrics using the following mathematical formulas:
+  </p>
+
+  <div class="formula-block">
+    ||A|| = &radic;(a<sub>x</sub><sup>2</sup> + a<sub>y</sub><sup>2</sup> + a<sub>z</sub><sup>2</sup>)<br>
+    A<sub>net</sub> = | ||A||<sub>filtered</sub> &minus; 9.80665 |<br>
+    DC<sub>t</sub> = &alpha; &middot; DC<sub>t&minus;1</sub> + (1 &minus; &alpha;) &middot; Raw<sub>t</sub> &nbsp;&nbsp; (&alpha; = 0.95)<br>
+    BPM = 60000 / IBI (ms)<br>
+    Altitude (h) = 44330.0 &times; (1.0 &minus; (P / 1013.25)<sup>1 / 5.255</sup>)<br>
+    Sweat Rate = &Delta;RH / &Delta;t<sub>minutes</sub> &nbsp; [% / min]<br>
+    Calories<sub>Total</sub> = [ (Steps &times; 0.040) + (Elevation Gain &times; 0.150) ] &times; (Mass<sub>kg</sub> / 70.0)
+  </div>
+
+  <h3 class="subsec-heading">4.1 Operational & Algorithm Parameters</h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 48%;">Parameter</th>
+        <th>Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>IMU Polling Frequency</td>
+        <td>50 Hz (20 ms interval)</td>
+      </tr>
+      <tr>
+        <td>Net Acceleration Footfall Threshold</td>
+        <td>2.50 m/s<sup>2</sup> above 1g baseline</td>
+      </tr>
+      <tr>
+        <td>Pedometer Debounce Lockout Hysteresis</td>
+        <td>350 ms lockout window (< 2.85 steps/sec)</td>
+      </tr>
+      <tr>
+        <td>PPG Sampling Rate & Resolution</td>
+        <td>100 Hz (10 ms interval), 12-bit ADC (0–4095)</td>
+      </tr>
+      <tr>
+        <td>PPG Physiological Bounds</td>
+        <td>45 BPM to 215 BPM (280 ms peak cooldown)</td>
+      </tr>
+      <tr>
+        <td>Altimeter Noise Deadband Filter</td>
+        <td>0.50 m threshold (rejects thermal turbulence)</td>
+      </tr>
+      <tr>
+        <td>Perspiration Rolling Derivative Window</td>
+        <td>60 seconds sliding time window</td>
+      </tr>
+      <tr>
+        <td>Wi-Fi SoftAP Configuration</td>
+        <td>SSID: ESP32_BioTracker (192.168.4.1)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2 class="sec-heading">5. System Workflow & Data Flow</h2>
+  <p>
+    The operational workflow executes a continuous mixed-signal monitoring cycle. The system initializes hardware buses, mounts flash NVS, and starts the local Wi-Fi SoftAP powered via the portable USB power bank. The ESP32 sequentially polls the IMU at 50 Hz, the PPG sensor at 100 Hz, the altimeter at 1 Hz, and the DHT22 microclimate sensor at 0.5 Hz. Signals pass through the mathematical filters to update cadence, heart rate, elevation, and hydration tiers. Processed metrics are streamed via JSON to the local dashboard.
+  </p>
+
+  <div class="page-footer">
+    <span>Off-Grid Biometric Ankle Tracker (BioTracker)</span>
+    <span>Page 3 of 6</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 5 ================= -->
+<div class="page page-break">
+  <!-- Centered Workflow Flowchart (exact replica of PDF page 5 style) -->
+  <div class="flowchart">
+    <div class="flow-start">START</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box">Power On via 5V USB Power Bank</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box">Initialize Wi-Fi SoftAP & Flash NVS</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box">Read Sensor Suite (MPU6050, Y1708, BMP280, DHT22)</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box flow-box-highlight">Execute Biometric Filtering & Kinematic Algorithms</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box">Update Metrics Payload & Flash Memory</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box">Stream Data to Local AJAX Dashboard (/api/data)</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-box">Render Live Metrics & HTML5 Canvas Trends</div>
+    <div class="flow-arrow">&darr;</div>
+    <div class="flow-repeat">&#8635; (Repeat Continuous Monitoring Cycle)</div>
+  </div>
+
+  <h2 class="sec-heading">6. Custom Web Dashboard</h2>
+  <p>
+    The user interface is an autonomous, dark-mode web dashboard served directly from the ESP32’s flash program memory at <code>http://192.168.4.1</code>. Key features include zero-dependency styling (no external CDN dependencies), real-time AJAX streaming updating all telemetry at 1,000 ms intervals, an HTML5 live canvas trendline for acceleration vectors and perspiration curves, two-way NVS profile calibration (allowing athletes to adjust height and mass dynamically), and manual calibration controls (zeroing elevation gain and resetting session step tallies).
+  </p>
+
+  <h2 class="sec-heading">7. Advanced Analytics and Environmental Compensation</h2>
+  <p>
+    The project incorporates dedicated algorithmic compensation techniques to overcome physical environmental and biological noise artifacts.
+  </p>
+
+  <h3 class="subsec-heading">7.1 Data Analytics & Hydration Categorization</h3>
+  <p>
+    The system continuously evaluates the delta relative humidity (&Delta;RH = RH<sub>skin</sub> &minus; RH<sub>ambient</sub>) and the 60-second rolling derivative to categorize hydration state into four actionable tiers: <em>Basal/Dry</em> (&lt;5%), <em>Mild Perspiration</em> (5–15%), <em>Active Sweat</em> (15–30%), and <em>Heavy Sweat / Hydrate Now</em> (&gt;30% or rate &gt; 3.0%/min).
+  </p>
+
+  <div class="page-footer">
+    <span>Off-Grid Biometric Ankle Tracker (BioTracker)</span>
+    <span>Page 4 of 6</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 6 ================= -->
+<div class="page page-break">
+  <h3 class="subsec-heading">7.2 Barometric Deadband & Optical Baseline Tracking</h3>
+  <p>
+    Atmospheric air drafts induce false elevation jitter. A 0.50-meter deadband filter discards minor pressure oscillations, while a monotonic positive-accumulation filter ensures that descent does not subtract from vertical work accomplished:
+  </p>
+  <div class="formula-block">
+    &Delta;h<sub>effective</sub> = &Delta;h &nbsp; [if |&Delta;h| &ge; 0.50 m], &nbsp; else &nbsp; 0.0 m<br>
+    Elevation Gain = &sum; max(0, &Delta;h<sub>effective</sub>)
+  </div>
+  <p>
+    Concurrently, the optical PPG sensor dynamically subtracts tissue optical absorption baselines using an EWMA filter (&alpha; = 0.95), isolating pure pulsatile AC arterial blood swings.
+  </p>
+
+  <h2 class="sec-heading">8. Advantages and Limitations</h2>
+
+  <h3 class="subsec-heading">8.1 System Advantages</h3>
+  <ul>
+    <li><strong>Kinematic Immunity to Upper-Limb Gestures:</strong> Directly captures tibial ground-impact shockwaves (> 2.50 m/s²), completely isolating locomotion from upper extremity movements (typing, gesturing, clapping) and eliminating the classic "floppy effect" [1].</li>
+    <li><strong>Accurate Tracking Under Constrained Arm Postures:</strong> Reliably detects footfalls when arms are immobilized (e.g., pushing carts, holding treadmill handrails, carrying objects) where conventional wristbands register severe false negatives.</li>
+    <li><strong>True Vertical Work & Caloric Accounting:</strong> Combines barometric elevation gain with horizontal footfall kinematics to directly calculate mechanical work against gravity (0.150 kcal/m), outperforming flat-step empirical models.</li>
+    <li><strong>Direct Microclimate Hydration & Perspiration Capture:</strong> Exploits the enclosed footwear boundary layer to monitor local relative humidity buildup and compute a dynamic sweat rate derivative before ambient air evaporation occurs [3].</li>
+    <li><strong>Completely Autonomous Off-Grid Operation:</strong> Hosts a local Wi-Fi SoftAP at 192.168.4.1 with a zero-dependency dark-mode dashboard, operating reliably in remote wilderness without cellular networks, Bluetooth pairing, or cloud infrastructure.</li>
+  </ul>
+
+  <h3 class="subsec-heading">8.2 Current Limitations & Challenges</h3>
+  <ul>
+    <li><strong>Absence of Dedicated Custom Onboard Battery:</strong> The current prototype relies on an external portable 5V USB power bank rather than a custom miniaturized lithium-polymer (LiPo) power cell with an integrated Battery Management System (BMS).</li>
+    <li><strong>Lack of Single-Unit Wearable Packaging:</strong> The microcontroller, sensors, and power wiring are connected as discrete prototyping modules rather than being seamlessly unified into a single ergonomic wearable casing or custom PCB.</li>
+    <li><strong>Ephemeral In-Memory Streaming (No Historical Logging):</strong> Biometric metrics are streamed live in volatile RAM and browser buffers without persistent storage (e.g., flash memory or SD card) for multi-session timeline tracking or retrospective clinical analysis.</li>
+    <li><strong>Analog PPG Susceptibility & Lack of Oximetry (SpO<sub>2</sub>):</strong> The single-wavelength optical phototransistor lacks active ambient light cancellation and cannot compute blood oxygen saturation (SpO<sub>2</sub>), making it susceptible to micro-decoupling during vigorous sprinting.</li>
+    <li><strong>Sensor Diffusion Latency & Power Bank Sleep Thresholds:</strong> Polymer capacitive humidity sensors exhibit physical moisture diffusion lag (6–15 s), while certain smart power banks require continuous active load current to prevent auto-sleep shutdowns.</li>
+  </ul>
+
+  <div class="page-footer">
+    <span>Off-Grid Biometric Ankle Tracker (BioTracker)</span>
+    <span>Page 5 of 6</span>
+  </div>
+</div>
+
+<!-- ================= PAGE 7 ================= -->
+<div class="page">
+  <h2 class="sec-heading">9. Future Scope & Applications</h2>
+  <p>
+    Future development will focus on transitioning the experimental prototype into a unified, commercial-grade wearable ecosystem through several strategic advancements:
+  </p>
+  <ul>
+    <li><strong>Seamless Single-Piece Wearable Integration:</strong> Designing a custom 4-layer rigid-flex PCB and an ergonomic, water-resistant silicone ankle enclosure that unifies the microcontroller, sensors, and power source into one single wearable device.</li>
+    <li><strong>Dedicated Miniature Battery with Power Management:</strong> Integrating an onboard high-density rechargeable LiPo pouch cell with an integrated charge management IC (e.g., TP4056 or BQ24075) to completely eliminate reliance on external power banks.</li>
+    <li><strong>Historical Data Logging & Timeline Generation:</strong> Incorporating an onboard SPI flash memory chip (or microSD interface) along with an embedded time-series database (e.g., LittleFS / SQLite) to record continuous biometric sessions for retrospective trend analysis.</li>
+    <li><strong>Replacement of PPG with Dedicated Pulse Oximeter (MAX30102):</strong> Upgrading the analog sensor to a medical-grade optical pulse oximeter module featuring dual-wavelength (660 nm Red / 880 nm Infrared) LEDs, 18-bit delta-sigma ADCs, and digital ambient light cancellation to simultaneously provide accurate heart rate (BPM) and blood oxygen saturation (SpO<sub>2</sub>).</li>
+    <li><strong>GNSS / GPS Module Integration (Add-on):</strong> Incorporating an ultra-compact GNSS/GPS receiver (e.g., u-blox NEO-6M or SAM-M8Q) to enable geospatial trajectory tracking, true ground speed calculation, and outdoor route mapping alongside elevation and footstep kinematics.</li>
+    <li><strong>Ultra-Low-Power BLE 5.0 & Edge TinyML:</strong> Migrating to an nRF52840 SoC to achieve &gt;60 hours of operational battery life, paired with an onboard 1D-CNN classifier for automatic gait mode identification.</li>
+  </ul>
+
+  <h2 class="sec-heading">10. Conclusion</h2>
+  <p>
+    The Off-Grid Biometric Ankle Tracker (BioTracker) successfully demonstrates how multi-modal sensor fusion, biomechanical lower-limb placement, and embedded web technologies can overcome the fundamental accuracy flaws of conventional wrist-worn wearables. By capturing true ground-reaction impact vectors, posterior tibial arterial pulses, vertical barometric work, and localized perspiration microclimates powered reliably via a portable USB power bank, the system provides a robust, field-tested foundation for athletic training, military expeditions, and clinical gait rehabilitation.
+  </p>
+
+  <h2 class="sec-heading">References</h2>
+  <div class="references">
+    <ol>
+      <li>Nature Scientific Reports, "Accuracy and reliability of accelerometer-based pedometers: Lower-limb vs. wrist placement," <em>Sci. Rep.</em>, vol. 14, p. 39532, 2024.</li>
+      <li>MDPI Sensors, "Frequency Analysis of Human Locomotion Shockwaves and Gait Cadence Characteristics," <em>Sensors</em>, vol. 25, no. 18, p. 5657, 2025.</li>
+      <li>MDPI Sensors, "Wearable Localized Microclimate Sensing for Perspiration and Thermal Comfort Monitoring," <em>Sensors</em>, vol. 26, no. 17, p. 5640, 2026.</li>
+      <li>Espressif Systems, "ESP-IDF Programming Guide: Wi-Fi SoftAP and ADC Hardware Subsystems," ESP32 Documentation. [Online]. Available: https://docs.espressif.com/projects/esp-idf/</li>
+      <li>InvenSense Inc., "MPU-6000 and MPU-6050 Product Specification and Register Map," Document Revision 3.4, 2021.</li>
+      <li>Bosch Sensortec, "BMP280 Digital Pressure Sensor Technical Data Sheet," Document BST-BMP280-DS001-19, 2022.</li>
+    </ol>
+  </div>
+
+  <div class="page-footer">
+    <span>Off-Grid Biometric Ankle Tracker (BioTracker)</span>
+    <span>Page 6 of 6</span>
+  </div>
+</div>
+
+</body>
+</html>
